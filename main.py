@@ -5,6 +5,7 @@ from time import sleep
 from plyer import notification
 import pystray
 from PIL import Image
+import sys
  
 image = Image.open("logo.png")
 
@@ -23,9 +24,15 @@ icon = pystray.Icon("PyMail", image, "PyMail", menu=pystray.Menu(pystray.MenuIte
 print('='*40+'Welcome to PyMail!'+'='*40)
 print('The preferred way to exit the program is to click the tray icon for PyMail and select "Exit".')
 print('-'*100)
-print('Enter your credentials:')
-user = input("Username: ")
-password = getpass.getpass("Password: ")
+if len(sys.argv) == 3:
+    user = sys.argv[1]
+    password = sys.argv[2]
+    print(f'Using username: {user} and password: '+'*'*len(password))
+else:
+    print('Enter your credentials:')
+    user = input("Username: ")
+    password = getpass.getpass("Password: ")
+    
 imap_url = 'imap.gmail.com'
 
 delay = 10 # seconds
