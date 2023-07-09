@@ -1,2 +1,2 @@
-# EmailCompiler
-A General Purpose Program to Compile/Dump Emails in a Formatted Manner
+# PyMail
+PyMail is a General Purpose IMAP Email Notifier written in Python. The host address must be changed to use a mail service other than Gmail.
