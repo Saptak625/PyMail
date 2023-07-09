@@ -32,7 +32,7 @@ else:
     print('Enter your credentials:')
     user = input("Username: ")
     password = getpass.getpass("Password: ")
-    
+
 imap_url = 'imap.gmail.com'
 
 delay = 10 # seconds
@@ -58,11 +58,11 @@ with imaplib.IMAP4_SSL(imap_url) as con:
         login_failed = True
 
     if not login_failed:
-        # Get all unread emails
-        con.select('INBOX')
-
         email_ids = []
         while not tray_exit:
+            # Get all unread emails
+            con.select('INBOX')
+
             # Check for new emails based on delay.
             result, data = con.search(None, 'UNSEEN')
             ids = data[0]
