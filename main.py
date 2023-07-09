@@ -69,9 +69,15 @@ with imaplib.IMAP4_SSL(imap_url) as con:
             id_list = ids.split()
             print('='*40+f'Found {len(id_list)} unread emails.'+'='*40)
 
-            for i in id_list:
+            for ind, i in enumerate(id_list):
                 if i in email_ids:
                     continue
+
+                # If id_list has more than 50 emails, read all emails, except last 50.
+                email_limit = False
+                if len(id_list) > 50 and ind+1 < len(id_list)-50:
+                    email_limit = True
+                    _, _ = con.fetch(i, '(RFC822)')
 
                 # Peek at the email to get the sender and subject. Do not mark as read.
                 result, data = con.fetch(i, '(BODY.PEEK[HEADER])')
@@ -98,11 +104,11 @@ with imaplib.IMAP4_SSL(imap_url) as con:
                         show_email = True
 
                 # Show push notification if email meets criteria.
-                if show_email:
+                if show_email and not email_limit:
                     print('Sending notification...')
                     notification.notify(
                         title=subject if len(subject) < 25 else subject[:25]+'...',
-                        message=f'From: {sender}',
+                        message=f'From: {sender}\nTo: {user}',
                         timeout=notification_time  # The notification will automatically close after 10 seconds
                     )
                 else:
