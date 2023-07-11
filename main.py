@@ -118,8 +118,9 @@ with imaplib.IMAP4_SSL(imap_url) as con:
                     print('-'*100)
 
                     email_ids.append(i)
-            except imaplib.abort as e:
+            except con.abort as e:
                 print('Connection aborted. Reconnecting...')
+                con.logout()
                 con = imaplib.IMAP4_SSL(imap_url)
             # Wait for delay before checking for new emails again.
             sleep(delay)  
