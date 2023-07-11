@@ -60,64 +60,67 @@ with imaplib.IMAP4_SSL(imap_url) as con:
     if not login_failed:
         email_ids = []
         while not tray_exit:
-            # Get all unread emails
-            con.select('INBOX')
+            try:
+                # Get all unread emails
+                con.select('INBOX')
 
-            # Check for new emails based on delay.
-            result, data = con.search(None, 'UNSEEN')
-            ids = data[0]
-            id_list = ids.split()
-            print('='*40+f'Found {len(id_list)} unread emails.'+'='*40)
+                # Check for new emails based on delay.
+                result, data = con.search(None, 'UNSEEN')
+                ids = data[0]
+                id_list = ids.split()
+                print('='*40+f'Found {len(id_list)} unread emails.'+'='*40)
 
-            for ind, i in enumerate(id_list):
-                if i in email_ids:
-                    continue
+                for ind, i in enumerate(id_list):
+                    if i in email_ids:
+                        continue
 
-                # If id_list has more than 50 emails, read all emails, except last 50.
-                email_limit = False
-                if len(id_list) > 50 and ind+1 < len(id_list)-50:
-                    email_limit = True
-                    _, _ = con.fetch(i, '(RFC822)')
+                    # If id_list has more than 50 emails, read all emails, except last 50.
+                    email_limit = False
+                    if len(id_list) > 50 and ind+1 < len(id_list)-50:
+                        email_limit = True
+                        _, _ = con.fetch(i, '(RFC822)')
 
-                # Peek at the email to get the sender and subject. Do not mark as read.
-                result, data = con.fetch(i, '(BODY.PEEK[HEADER])')
-                email_msg = data[0][1].decode('utf-8')
-                sender = email_msg[email_msg.find('From: ')+6:]
-                sender = sender[:sender.find('\n')]
-                subject = email_msg[email_msg.find('Subject: ')+9:]
-                subject = subject[:subject.find('\n')]
-                print('-'*100)
-                print(f'From: {sender}')
-                print(f'Subject: {subject}')
+                    # Peek at the email to get the sender and subject. Do not mark as read.
+                    result, data = con.fetch(i, '(BODY.PEEK[HEADER])')
+                    email_msg = data[0][1].decode('utf-8')
+                    sender = email_msg[email_msg.find('From: ')+6:]
+                    sender = sender[:sender.find('\n')]
+                    subject = email_msg[email_msg.find('Subject: ')+9:]
+                    subject = subject[:subject.find('\n')]
+                    print('-'*100)
+                    print(f'From: {sender}')
+                    print(f'Subject: {subject}')
 
-                show_email = False
-                if not priority_1 and not priority_2:
-                    show_email = True # Show all emails if no criteria are specified.
-                else:
-                    # Check if email meets one of the criteria in priority 1 or 2.
-                    # Priority 1: Emails from specific senders.
-                    sender_email = sender[sender.find('<')+1:sender.find('>')]
-                    if priority_1 and sender_email in priority_1:
-                        show_email = True
-                    # Priority 2: Emails with specific keywords.
-                    elif priority_2 and any(keyword in subject for keyword in priority_2):
-                        show_email = True
+                    show_email = False
+                    if not priority_1 and not priority_2:
+                        show_email = True # Show all emails if no criteria are specified.
+                    else:
+                        # Check if email meets one of the criteria in priority 1 or 2.
+                        # Priority 1: Emails from specific senders.
+                        sender_email = sender[sender.find('<')+1:sender.find('>')]
+                        if priority_1 and sender_email in priority_1:
+                            show_email = True
+                        # Priority 2: Emails with specific keywords.
+                        elif priority_2 and any(keyword in subject for keyword in priority_2):
+                            show_email = True
 
-                # Show push notification if email meets criteria.
-                if show_email and not email_limit:
-                    print('Sending notification...')
-                    notification.notify(
-                        title=subject if len(subject) < 25 else subject[:25]+'...',
-                        message=f'From: {sender}\nTo: {user}',
-                        timeout=notification_time  # The notification will automatically close after 10 seconds
-                    )
-                else:
-                    print('Email does not meet criteria. Skipping...')
+                    # Show push notification if email meets criteria.
+                    if show_email and not email_limit:
+                        print('Sending notification...')
+                        notification.notify(
+                            title=subject if len(subject) < 25 else subject[:25]+'...',
+                            message=f'From: {sender}\nTo: {user}',
+                            timeout=notification_time  # The notification will automatically close after 10 seconds
+                        )
+                    else:
+                        print('Email does not meet criteria. Skipping...')
 
-                print('-'*100)
+                    print('-'*100)
 
-                email_ids.append(i)
-
+                    email_ids.append(i)
+            except imaplib.abort as e:
+                print('Connection aborted. Reconnecting...')
+                con = imaplib.IMAP4_SSL(imap_url)
             # Wait for delay before checking for new emails again.
             sleep(delay)  
         print('Exiting...')
